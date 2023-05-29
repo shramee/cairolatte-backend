@@ -8,10 +8,12 @@ use hanji::SyntaxKind::*;
 use hanji::SyntaxNode;
 
 use hanji::TemplateEngine;
+use serde_json::Value;
 
-pub struct JSONEngine {
+pub struct JSONEngine<'a> {
     repo: String,
     pub path: String,
+    fallback_descriptions: &'a Value,
     pub templates: HashMap<String, String>,
     nodes: Vec<(SyntaxKind, String, usize)>,
     tokens: Vec<(SyntaxKind, String, String)>,
@@ -19,7 +21,7 @@ pub struct JSONEngine {
     payload: String,
 }
 
-impl TemplateEngine for JSONEngine {
+impl<'a> TemplateEngine for JSONEngine<'a> {
     fn init(&mut self, _db: &dyn SyntaxGroup) {}
 
     fn token(&mut self, description: &str, text: &str, node: &SyntaxNode, db: &dyn SyntaxGroup) {
@@ -62,8 +64,8 @@ impl TemplateEngine for JSONEngine {
     }
 }
 
-impl JSONEngine {
-    pub fn new(repo: String, path: String) -> Self {
+impl<'a> JSONEngine<'a> {
+    pub fn new(repo: String, path: String, fallback_descriptions: &'a Value) -> Self {
         let mut ignored_nodes: HashMap<SyntaxKind, u8> = HashMap::new();
         // ignored_nodes.contains_key("");
         // ignored_nodes.insert(ItemList, 0);
@@ -76,6 +78,7 @@ impl JSONEngine {
         Self {
             repo,
             path,
+            fallback_descriptions,
             templates: HashMap::new(),
             nodes: Vec::new(),
             tokens: Vec::new(),
@@ -185,15 +188,16 @@ impl JSONEngine {
 
         let mut push_payload = |s: &str| self.payload.push_str(s);
 
-        let hash = calculate_hash(&code);
+        let hash = format!("{}", calculate_hash(&code));
 
         push_payload("  {\n");
-        push_payload(&format!("    _id: '{hash}',\n"));
+        push_payload(&format!("    _id:'{hash}',\n"));
         push_payload(&format!("    name:'{function_name}',\n"));
         if function_comments.trim().len() == 0 {
             // @TODO get function comments from OpenAI calls
-            let function_comments = "";
-            push_payload(&format!("    desc:'{function_comments}',\n"));
+            if let Some(desc) = self.fallback_descriptions.get(hash) {
+                push_payload(&format!("    desc:'{desc}',\n"));
+            }
         } else {
             push_payload(&format!("    desc:'{function_comments}',\n"));
         }
