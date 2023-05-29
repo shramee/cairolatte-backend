@@ -99,6 +99,7 @@ impl<'a> JSONEngine<'a> {
         let mut i: usize = 0;
 
         let mut function_name = String::new();
+        let mut function_macro = String::new();
         let mut function_comments = String::new();
         let mut function_args = String::new();
         let mut function_return = String::new();
@@ -118,7 +119,10 @@ impl<'a> JSONEngine<'a> {
         }
 
         while i < max_index {
-            let (kind, _, _) = &tokens[i];
+            let (kind, _, desc) = &tokens[i];
+            if TokenIdentifier == *kind {
+                function_macro.push_str(desc);
+            }
             if TokenFunction == *kind {
                 i += 1;
                 break;
@@ -189,6 +193,9 @@ impl<'a> JSONEngine<'a> {
         let mut push_payload = |s: &str| self.payload.push_str(s);
 
         let hash = format!("{}", calculate_hash(&code));
+        if &function_macro == "event" {
+            return;
+        }
 
         push_payload("  {\n");
         push_payload(&format!("    _id:'{hash}',\n"));
