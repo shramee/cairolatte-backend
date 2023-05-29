@@ -10,6 +10,8 @@ use hanji::SyntaxNode;
 use hanji::TemplateEngine;
 
 pub struct JSONEngine {
+    repo: String,
+    pub path: String,
     pub templates: HashMap<String, String>,
     nodes: Vec<(SyntaxKind, String, usize)>,
     tokens: Vec<(SyntaxKind, String, String)>,
@@ -61,7 +63,7 @@ impl TemplateEngine for JSONEngine {
 }
 
 impl JSONEngine {
-    pub fn new() -> Self {
+    pub fn new(repo: String, path: String) -> Self {
         let mut ignored_nodes: HashMap<SyntaxKind, u8> = HashMap::new();
         // ignored_nodes.contains_key("");
         // ignored_nodes.insert(ItemList, 0);
@@ -72,6 +74,8 @@ impl JSONEngine {
         ignored_nodes.insert(TokenNewline, 0);
         ignored_nodes.insert(TokenNewline, 0);
         Self {
+            repo,
+            path,
             templates: HashMap::new(),
             nodes: Vec::new(),
             tokens: Vec::new(),
@@ -179,27 +183,24 @@ impl JSONEngine {
             .for_each(|x| code.push_str(&x.get_text(db)));
         code = code.trim_matches('\n').to_string();
 
-        let hash = calculate_hash(&code);
-        if function_comments.trim().len() == 0 {
-            self.payload.push_str(&format!("'{hash}':`{code}`,\n"));
-        }
-    }
+        let mut push_payload = |s: &str| self.payload.push_str(s);
 
-    pub fn render_syntax_doc(
-        &self,
-        kind: SyntaxKind,
-        desc: &str,
-        text: &str,
-        _parent_kind: SyntaxKind,
-    ) -> String {
-        match kind {
-            TokenSingleLineComment => {
-                format!("{kind:#?} {desc} {text}\n")
-            }
-            _ => {
-                format!("{kind:#?} {desc} {text}\n")
-            }
+        let hash = calculate_hash(&code);
+
+        push_payload("  {\n");
+        push_payload(&format!("    _id: '{hash}',\n"));
+        push_payload(&format!("    name:'{function_name}',\n"));
+        if function_comments.trim().len() == 0 {
+            // @TODO get function comments from OpenAI calls
+            let function_comments = "";
+            push_payload(&format!("    desc:'{function_comments}',\n"));
+        } else {
+            push_payload(&format!("    desc:'{function_comments}',\n"));
         }
+        // push_payload(&format!("    code:'{code}',\n"));
+        push_payload(&format!("    repo:'{}',\n", self.repo));
+        push_payload(&format!("    path:'{}',\n", self.path));
+        push_payload("  },\n");
     }
 }
 

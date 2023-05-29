@@ -13,7 +13,52 @@ fn main() {
     let out_path = PathBuf::from("out");
 
     let repos = vec![
-        "greged93/2wrds_cntrcts",
+        "_test",
+        // "greged93/2wrds_cntrcts",
+        // "bowbowzai/hello-cairo",
+        // "lambdaclass/cairo-rs",
+        // "enitrat/erc721-cairo1",
+        // "0xs34n/starknet.js",
+        // "argentlabs/starknet-build",
+        // "dojoengine/dojo",
+        // "starknet-edu/deploy-cairo1-demo",
+        // "CeliktepeMurat/Cairo1.0_by_Examples",
+        // "gyan0890/EDEN23Cairo1",
+        // "ruleslabs/kass",
+        // "software-mansion/protostar",
+        // "gaetbout/starknet-commit-reveal",
+        // "0xSpaceShard/starknet-hardhat-example",
+        // "enitrat/cairo1-template",
+        // "milancermak/cairo_nft",
+        // "lambdaclass/starknet_in_rust",
+        // "starknet-edu/starknetbook",
+        // "cartridge-gg/rollyourown",
+        // "topology-gg/shoshin-cairo-1",
+        // "Dev43/aa-cairo1",
+        // "starknet-edu/starknet-cairo-101",
+        // "WTFAcademy/WTF-Cairo",
+        // "BibliothecaDAO/eternum",
+        // "gsgalloway/zksnark-sudokus",
+        // "gizatechxyz/orion",
+        // "zkLinkProtocol/zklink-starknet-contracts",
+        // // "shramee/starklings-cairo1",
+        // "Nadai2010/Nadai-Cairo-1.0-Sierra",
+        // "TheArkProjekt/Starklane",
+        // "NethermindEth/warp-plugin",
+        // "BlockchainAsset/cairo-contracts",
+        // "finiam/cairo-workshop",
+        // "Th0rgal/erc721",
+        // "glihm/cairol",
+        // "auditless/suna",
+        // "ExtropyIO/ZeroKnowledgeBootcamp",
+        // "BibliothecaDAO/InstaSwap",
+        // "Th0rgal/contract",
+        // "kkrt-labs/kakarot-ssj",
+        // "Seraph-Labs/Cairo-Contracts",
+        // "augustbleeds/quaireaux",
+        // "keep-starknet-strange/alexandria",
+        // "smartcontractkit/chainlink-starknet",
+        // "starkware-libs/cairo",
     ];
 
     create_dir_all(&out_path).unwrap();
@@ -27,40 +72,34 @@ fn main() {
         .create(true)
         .open(&doc_file_path.into_os_string().to_str().unwrap())
         .unwrap();
+    let mut fn_json_docs = String::from("let function_docs = [\n");
+
     for (i, repo) in repos.iter().enumerate() {
         // let mut json_path = out_path.clone();
         println!("{i} Processing {repo}");
-        file = process_files(format!("cairo-repos/{repo}"), repo, file);
+        process_files(format!("cairo-repos/{repo}"), repo, &mut fn_json_docs);
     }
 
-    // Cairo language spec
-    // cairo_lang_syntax_codegen::cairo_spec::get_spec
+    fn_json_docs.push_str("];");
+    // println!("----------\n\n{fn_json_docs}\n----------");
+    file.write_all(fn_json_docs.as_bytes()).unwrap();
 }
 
-fn process_files(path: String, repo: &str, mut file: File) -> File {
-    let in_path = PathBuf::from(&path);
-
-    println!("{in_path:?}");
-
+fn process_files(path: String, repo: &str, docs: &mut String) {
+    let repo_dir = PathBuf::from(&path);
     // remove_dir_all(&out_path).unwrap();
-    let cairo_files = get_cairo_files_in_path(&in_path);
-
-    let mut functions = String::from("\n// ");
-
-    functions.push_str(repo);
-    functions.push_str("\n");
+    let cairo_files = get_cairo_files_in_path(&repo_dir);
 
     for cairo_file in cairo_files.iter() {
-        println!("Processing {cairo_file:?}");
-        functions.push_str(&run_printer(
+        // println!("Processing {cairo_file:?}");
+        // let rel_path = cairo_file.to_str().unwrap();
+        let rel_path = &cairo_file.to_str().unwrap()[repo_dir.to_str().unwrap().len() + 1..];
+        println!("{rel_path}");
+        docs.push_str(&run_printer(
             cairo_file.to_str().unwrap(),
-            hanji::MarkdownEngine::new(),
+            json_engine::JSONEngine::new(repo.into(), rel_path.into()),
         ));
     }
-
-    file.write_all(functions.as_bytes()).unwrap();
-
-    file
 }
 //
 //
