@@ -63,7 +63,7 @@ fn main() {
 
     create_dir_all(&out_path).unwrap();
     let mut doc_file_path = out_path.clone();
-    doc_file_path.push("functions-source");
+    doc_file_path.push("functions-docs");
     doc_file_path.set_extension("js");
     create_dir_all(&doc_file_path.parent().unwrap()).unwrap();
 
@@ -101,7 +101,7 @@ fn process_files(path: String, repo: &str, docs: &mut String, fallback_descripti
         // println!("Processing {cairo_file:?}");
         // let rel_path = cairo_file.to_str().unwrap();
         let rel_path = &cairo_file.to_str().unwrap()[repo_dir.to_str().unwrap().len() + 1..];
-        println!("{rel_path}");
+        println!("\t{rel_path}");
         docs.push_str(&run_printer(
             cairo_file.to_str().unwrap(),
             json_engine::JSONEngine::new(repo.into(), rel_path.into(), fallback_descriptions),

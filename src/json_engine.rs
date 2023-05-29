@@ -196,10 +196,16 @@ impl<'a> JSONEngine<'a> {
         if function_comments.trim().len() == 0 {
             // @TODO get function comments from OpenAI calls
             if let Some(desc) = self.fallback_descriptions.get(hash) {
-                push_payload(&format!("    desc:'{desc}',\n"));
+                push_payload(&format!(
+                    "    desc:{},\n",
+                    desc.to_string().replace("\n", "\\n")
+                ));
             }
         } else {
-            push_payload(&format!("    desc:'{function_comments}',\n"));
+            push_payload(&format!(
+                "    desc:`{}`,\n",
+                function_comments.replace("`", "\\`")
+            ));
         }
         // push_payload(&format!("    code:'{code}',\n"));
         push_payload(&format!("    repo:'{}',\n", self.repo));
