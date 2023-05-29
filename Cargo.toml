@@ -6,5 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+hanji = { git = "https://github.com/shramee/hanji", rev = "1fa40e6d5bacba035c6d6e19ae657487b310d180"}
 serde = "1.0.163"
 serde_json = "1.0.96"
